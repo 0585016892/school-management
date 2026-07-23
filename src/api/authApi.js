@@ -43,6 +43,9 @@ const authApi = {
   forgotPassword(email) {
     return axiosClient.post("/auth/forgot-password", { email });
   },
+  changeRole: (id, role) => {
+    return axiosClient.put(`/auth/${id}/change-role`, { role });
+  },
 };
 
 export default authApi;

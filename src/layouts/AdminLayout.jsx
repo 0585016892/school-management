@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Layout,
   Menu,
@@ -10,8 +10,9 @@ import {
   Button,
 } from "antd";
 import { Icon } from "@iconify/react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Navigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { ROLES } from "../constants/roles";
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
@@ -22,32 +23,128 @@ function AdminLayout() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  // Mapping danh mục chuẩn để hiển thị Breadcrumb động dựa trên pathname thực tế
+  // Lấy role hiện tại của user (mặc định nếu chưa load xong)
+  const userRole = user?.role;
+
+  // =====================================================
+  // BREADCRUMB MAP
+  // =====================================================
   const breadcrumbNameMap = {
-    "": "Hệ thống",
     admin: "Tổng quan Dashboard",
+    organization: "Tổ chức nhà trường",
+    management: "Ban giám hiệu",
+    departments: "Tổ chuyên môn",
+    union: "Công đoàn cơ sở",
+    schoolCouncil: "Hội đồng trường",
     students: "Quản lý Học sinh",
+    parents: "Quản lý Phụ huynh",
     teachers: "Đội ngũ Giáo viên",
+    staffs: "Nhân viên",
     classes: "Danh sách Lớp học",
     subjects: "Chương trình Môn học",
+    assignments: "Phân công giảng dạy",
     schedules: "Thời khóa biểu giảng dạy",
     attendance: "Điểm danh chuyên cần",
     scores: "Bảng điểm học tập",
     tuition: "Quản lý Học phí",
+    rewards: "Thi đua - Khen thưởng",
+    discipline: "Kỷ luật",
+    announcements: "Thông báo",
+    documents: "Văn bản",
+    meetings: "Cuộc họp",
+    profile: "Hồ sơ cá nhân",
   };
 
-  // Trích xuất đoạn cuối của URL để so khớp chính xác Menu Item active độc lập
-  const currentKey = location.pathname.split("/").pop() || "admin";
+  // Lấy key hiện tại từ URL
+  const currentKey =
+    location.pathname.split("/").filter(Boolean).pop() || "admin";
 
-  // Hệ thống Menu Items chuyển đổi toàn bộ sang Iconify (Solar Linear)
-  const menuItems = [
+  // =====================================================
+  // DANH SÁCH MENU GỐC (CẤU HÌNH PHÂN QUYỀN)
+  // =====================================================
+  const rawMenuItems = [
+    // DASHBOARD
     {
-      key: "", // 🌟 ĐÃ SỬA: Xóa bỏ gạch chéo và khoảng trắng thừa "/admin  " để đồng bộ nhận diện active key
+      key: "admin",
       icon: <Icon icon="solar:widget-2-linear" style={{ fontSize: "20px" }} />,
       label: "Dashboard",
+      roles: Object.values(ROLES),
     },
+
+    // TỔ CHỨC NHÀ TRƯỜNG
     {
-      key: "group-1",
+      key: "organization-group",
+      type: "group",
+      label: "TỔ CHỨC NHÀ TRƯỜNG",
+      children: [
+        {
+          key: "organization",
+          icon: (
+            <Icon
+              icon="solar:buildings-2-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Tổ chức nhà trường",
+          roles: [ROLES.ADMIN, ROLES.PRINCIPAL],
+        },
+        {
+          key: "management",
+          icon: (
+            <Icon
+              icon="solar:users-group-rounded-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Ban giám hiệu",
+          roles: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL],
+        },
+        {
+          key: "departments",
+          icon: <Icon icon="solar:case-linear" style={{ fontSize: "20px" }} />,
+          label: "Tổ chuyên môn",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.DEPARTMENT_HEAD,
+            ROLES.TEACHER,
+          ],
+        },
+        {
+          key: "union",
+          icon: (
+            <Icon
+              icon="solar:users-group-two-rounded-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Công đoàn cơ sở",
+          roles: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.UNION_PRESIDENT],
+        },
+      ],
+    },
+
+    // HỘI ĐỒNG
+    {
+      key: "council-group",
+      type: "group",
+      label: "HỘI ĐỒNG",
+      children: [
+        {
+          key: "schoolCouncil",
+          icon: (
+            <Icon icon="solar:buildings-linear" style={{ fontSize: "20px" }} />
+          ),
+          label: "Hội đồng trường",
+          roles: [ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.SCHOOL_COUNCIL],
+        },
+      ],
+    },
+
+    // NHÂN SỰ
+    {
+      key: "human-resource-group",
       type: "group",
       label: "NHÂN SỰ",
       children: [
@@ -60,6 +157,29 @@ function AdminLayout() {
             />
           ),
           label: "Học sinh",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+          ],
+        },
+        {
+          key: "parents",
+          icon: (
+            <Icon
+              icon="solar:users-group-rounded-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Phụ huynh",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.SCHOOL_COUNCIL,
+          ],
         },
         {
           key: "teachers",
@@ -70,21 +190,52 @@ function AdminLayout() {
             />
           ),
           label: "Giáo viên",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.DEPARTMENT_HEAD,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.UNION_PRESIDENT,
+            ROLES.SCHOOL_COUNCIL,
+          ],
+        },
+        {
+          key: "staffs",
+          icon: (
+            <Icon icon="solar:user-id-linear" style={{ fontSize: "20px" }} />
+          ),
+          label: "Nhân viên",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.DEPARTMENT_HEAD,
+            ROLES.OFFICE_STAFF,
+            ROLES.UNION_PRESIDENT,
+            ROLES.SCHOOL_COUNCIL,
+          ],
         },
       ],
     },
+
+    // ĐÀO TẠO
     {
-      key: "group-2",
+      key: "training-group",
       type: "group",
       label: "ĐÀO TẠO",
       children: [
         {
           key: "classes",
-          // 🌟 Đặt icon Blackboard mới cho đồng bộ cấu trúc lớp học
           icon: (
             <Icon icon="solar:blackboard-linear" style={{ fontSize: "20px" }} />
           ),
           label: "Lớp học",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.STUDENT,
+          ],
         },
         {
           key: "subjects",
@@ -92,23 +243,33 @@ function AdminLayout() {
             <Icon icon="solar:notebook-linear" style={{ fontSize: "20px" }} />
           ),
           label: "Môn học",
+          roles: Object.values(ROLES),
         },
         {
           key: "schedules",
           icon: (
             <Icon
-              icon="solar:calendar-date-linear"
+              icon="solar:clipboard-list-linear"
               style={{ fontSize: "20px" }}
             />
           ),
-          label: "Thời khóa biểu",
+          label: "Thời khóa biểu / Phân công",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.STUDENT,
+          ],
         },
       ],
     },
+
+    // NGHIỆP VỤ
     {
-      key: "group-3",
+      key: "report-group",
       type: "group",
-      label: "BÁO CÁO",
+      label: "NGHIỆP VỤ",
       children: [
         {
           key: "attendance",
@@ -116,6 +277,14 @@ function AdminLayout() {
             <Icon icon="solar:user-speak-linear" style={{ fontSize: "20px" }} />
           ),
           label: "Điểm danh",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.STUDENT,
+            ROLES.PARENT,
+          ],
         },
         {
           key: "scores",
@@ -126,6 +295,7 @@ function AdminLayout() {
             />
           ),
           label: "Điểm số",
+          roles: Object.values(ROLES),
         },
         {
           key: "tuition",
@@ -136,20 +306,207 @@ function AdminLayout() {
             />
           ),
           label: "Học phí",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.OFFICE_STAFF,
+            ROLES.PARENT,
+            ROLES.STUDENT,
+          ],
+        },
+        {
+          key: "rewards",
+          icon: (
+            <Icon
+              icon="solar:medal-ribbons-star-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Thi đua - Khen thưởng",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.UNION_PRESIDENT,
+            ROLES.TEACHER,
+            ROLES.SCHOOL_COUNCIL,
+          ],
+        },
+        {
+          key: "discipline",
+          icon: (
+            <Icon
+              icon="solar:danger-triangle-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Kỷ luật",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.SCHOOL_COUNCIL,
+          ],
+        },
+      ],
+    },
+
+    // ĐIỀU HÀNH
+    {
+      key: "operation-group",
+      type: "group",
+      label: "ĐIỀU HÀNH",
+      children: [
+        {
+          key: "announcements",
+          icon: <Icon icon="solar:bell-linear" style={{ fontSize: "20px" }} />,
+          label: "Thông báo",
+          roles: Object.values(ROLES),
+        },
+        {
+          key: "documents",
+          icon: (
+            <Icon
+              icon="solar:document-text-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Văn bản",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.TEACHER,
+            ROLES.DEPARTMENT_HEAD,
+            ROLES.OFFICE_STAFF,
+            ROLES.UNION_PRESIDENT,
+            ROLES.SCHOOL_COUNCIL,
+          ],
+        },
+        {
+          key: "meetings",
+          icon: (
+            <Icon
+              icon="solar:calendar-mark-linear"
+              style={{ fontSize: "20px" }}
+            />
+          ),
+          label: "Cuộc họp",
+          roles: [
+            ROLES.ADMIN,
+            ROLES.PRINCIPAL,
+            ROLES.VICE_PRINCIPAL,
+            ROLES.DEPARTMENT_HEAD,
+            ROLES.TEACHER,
+            ROLES.OFFICE_STAFF,
+            ROLES.UNION_PRESIDENT,
+            ROLES.SCHOOL_COUNCIL,
+          ],
         },
       ],
     },
   ];
 
+  // =====================================================
+  // HÀM LỌC MENU THEO ROLE
+  // =====================================================
+  const authorizedMenuItems = useMemo(() => {
+    if (!userRole) return [];
+
+    return rawMenuItems
+      .map((item) => {
+        // Nếu là group menu, lọc bớt các children không có quyền
+        if (item.type === "group" && item.children) {
+          const filteredChildren = item.children.filter((child) =>
+            child.roles?.includes(userRole),
+          );
+
+          // Nếu nhóm không còn item con nào thì ẩn luôn cả nhóm
+          if (filteredChildren.length === 0) return null;
+
+          return { ...item, children: filteredChildren };
+        }
+
+        // Nếu là single item, kiểm tra roles
+        if (item.roles && item.roles.includes(userRole)) {
+          return item;
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  }, [userRole]);
+
+  // =====================================================
+  // KIỂM TRA QUYỀN TRUY CẬP TRỰC TIẾP QUA URL (ROUTE GUARD)
+  // =====================================================
+  const hasPermission = useMemo(() => {
+    if (!userRole) return false;
+    if (currentKey === "admin" || currentKey === "profile") return true;
+
+    // Tìm item đang truy cập trong danh sách phẳng
+    let targetItem = null;
+    rawMenuItems.forEach((item) => {
+      if (item.key === currentKey) targetItem = item;
+      if (item.children) {
+        const found = item.children.find((c) => c.key === currentKey);
+        if (found) targetItem = found;
+      }
+    });
+
+    if (!targetItem) return true; // Cho phép route tự xử lý 404 nếu route không tồn tại trong menu
+    return targetItem.roles?.includes(userRole);
+  }, [currentKey, userRole]);
+
+  // Nếu người dùng gõ URL không có quyền -> Chuyển hướng
+  if (!hasPermission) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Handle click Menu
+  const handleMenuClick = ({ key }) => {
+    if (key === "admin") {
+      navigate("/admin");
+      return;
+    }
+    navigate(`/admin/${key}`);
+  };
+
   return (
-    <Layout style={{ minHeight: "100vh", background: "#f8fafc" }}>
+    <Layout
+      style={{ minHeight: "100vh", height: "100vh", background: "#f8fafc" }}
+    >
       <style>{`
         .custom-sider .ant-menu-item-selected {
           background-color: #eefafc !important;
           color: #37b0c3 !important;
         }
+        .custom-sider .ant-menu-item-selected .anticon {
+          color: #37b0c3 !important;
+        }
         .custom-sider .ant-menu-item:hover {
           color: #37b0c3 !important;
+        }
+        .custom-sider .ant-menu-item:hover .anticon {
+          color: #37b0c3 !important;
+        }
+        .menu-scroll::-webkit-scrollbar {
+          width: 5px;
+        }
+        .menu-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .menu-scroll::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .menu-scroll::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        .menu-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
         }
         .user-dropdown-box:hover {
           background-color: #f1f5f9;
@@ -160,6 +517,7 @@ function AdminLayout() {
         }
       `}</style>
 
+      {/* SIDEBAR */}
       <Sider
         width={260}
         collapsible
@@ -183,16 +541,20 @@ function AdminLayout() {
           )}
         </div>
 
-        <Menu
-          mode="inline"
-          selectedKeys={[currentKey]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-          style={styles.menu}
-        />
+        <div className="menu-scroll" style={styles.menuScroll}>
+          <Menu
+            mode="inline"
+            selectedKeys={[currentKey]}
+            items={authorizedMenuItems}
+            onClick={handleMenuClick}
+            style={styles.menu}
+          />
+        </div>
       </Sider>
 
-      <Layout style={{ transition: "all 0.2s" }}>
+      {/* MAIN LAYOUT */}
+      <Layout style={{ minWidth: 0, height: "100vh", transition: "all 0.2s" }}>
+        {/* HEADER */}
         <Header style={styles.header}>
           <Space size="middle">
             <Button
@@ -219,6 +581,7 @@ function AdminLayout() {
             />
           </Space>
 
+          {/* USER AREA */}
           <Space size={20}>
             <Button
               type="text"
@@ -228,13 +591,9 @@ function AdminLayout() {
                   style={{ fontSize: "22px", color: "#64748b" }}
                 />
               }
-              style={{
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={styles.notificationBtn}
             />
+
             <Dropdown
               menu={{
                 items: [
@@ -247,7 +606,7 @@ function AdminLayout() {
                       />
                     ),
                     label: "Hồ sơ cá nhân",
-                    onClick: () => navigate("/admin/profile"), // 🌟 ĐÃ SỬA: Bổ sung sự kiện onClick để chuyển trang sang hồ sơ Admin
+                    onClick: () => navigate("/admin/profile"),
                   },
                   {
                     key: "change-password",
@@ -289,6 +648,7 @@ function AdminLayout() {
                 >
                   {user?.username?.charAt(0).toUpperCase() || "A"}
                 </Avatar>
+
                 {!collapsed && (
                   <div style={{ lineHeight: 1.2 }}>
                     <Text strong style={{ display: "block", color: "#334155" }}>
@@ -298,7 +658,7 @@ function AdminLayout() {
                       type="secondary"
                       style={{ fontSize: 11, fontWeight: 500 }}
                     >
-                      {user?.role?.toUpperCase() || "ADMINISTRATOR"}
+                      {user?.role?.toUpperCase() || "GUEST"}
                     </Text>
                   </div>
                 )}
@@ -307,6 +667,7 @@ function AdminLayout() {
           </Space>
         </Header>
 
+        {/* CONTENT */}
         <Content style={styles.content}>
           <div style={styles.mainWrapper}>
             <Outlet />
@@ -319,6 +680,9 @@ function AdminLayout() {
 
 const styles = {
   sider: {
+    height: "100vh",
+    overflow: "hidden",
+    background: "#fff",
     boxShadow: "1px 0 8px rgba(0,0,0,0.02)",
     zIndex: 10,
     position: "relative",
@@ -326,11 +690,15 @@ const styles = {
   },
   logoContainer: {
     height: 70,
+    minHeight: 70,
     display: "flex",
     alignItems: "center",
     padding: "0 24px",
     gap: "12px",
     borderBottom: "1px solid #f1f5f9",
+    background: "#fff",
+    position: "relative",
+    zIndex: 2,
   },
   logoIcon: {
     width: 36,
@@ -349,10 +717,18 @@ const styles = {
     letterSpacing: "0.5px",
     fontWeight: 800,
     fontSize: "16px",
+    whiteSpace: "nowrap",
+  },
+  menuScroll: {
+    height: "calc(100vh - 70px)",
+    maxHeight: "calc(100vh - 70px)",
+    overflowY: "auto",
+    overflowX: "hidden",
   },
   menu: {
     borderRight: 0,
     padding: "16px 12px",
+    background: "#fff",
   },
   header: {
     padding: "0 24px",
@@ -361,6 +737,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     height: 70,
+    minHeight: 70,
     borderBottom: "1px solid #e2e8f0",
   },
   toggleBtn: {
@@ -374,6 +751,12 @@ const styles = {
     border: "1px solid #e2e8f0",
     color: "#64748b",
   },
+  notificationBtn: {
+    borderRadius: 8,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   breadcrumb: {
     fontSize: "14px",
     fontWeight: 500,
@@ -386,7 +769,8 @@ const styles = {
   },
   content: {
     margin: "24px",
-    overflow: "initial",
+    overflow: "auto",
+    minWidth: 0,
   },
   mainWrapper: {
     padding: 24,

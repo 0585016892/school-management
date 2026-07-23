@@ -1,28 +1,31 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import Login from "../pages/Auth/Login";
-import AdminProfile from "../pages/Auth/AdminProfile";
+import Login from "../pages/Admin/Auth/Login";
+import AdminProfile from "../pages/Admin/Auth/AdminProfile";
 
 // ================= ADMIN =================
 import AdminLayout from "../layouts/AdminLayout";
-import Dashboard from "../pages/Dashboard/Dashboard";
+import Dashboard from "../pages/Admin/Dashboard/Dashboard";
 
-import TeacherList from "../pages/Teachers/TeacherList";
-import TeacherAdd from "../pages/Teachers/TeacherAdd";
-import TeacherEdit from "../pages/Teachers/TeacherEdit";
-import TeacherProfile from "../pages/Teachers/TeacherProfile";
+import TeacherList from "../pages/Admin/Teachers/TeacherList";
+import TeacherAdd from "../pages/Admin/Teachers/TeacherAdd";
+import TeacherEdit from "../pages/Admin/Teachers/TeacherEdit";
+import TeacherProfile from "../pages/Admin/Teachers/TeacherProfile";
 
-import StudentList from "../pages/Students/StudentList";
-import StudentProfile from "../pages/Students/StudentProfile";
+import StudentList from "../pages/Admin/Students/StudentList";
+import StudentProfile from "../pages/Admin/Students/StudentProfile";
 
-import ClassList from "../pages/Classes/ClassList";
-import ClassDetail from "../pages/Classes/ClassDetail";
+import ClassList from "../pages/Admin/Classes/ClassList";
+import ClassDetail from "../pages/Admin/Classes/ClassDetail";
 
-import SubjectPage from "../pages/Subjects/SubjectList";
-import TuitionPage from "../pages/Tuition/TuitionList";
+import SubjectPage from "../pages/Admin/Subjects/SubjectList";
+import TuitionPage from "../pages/Admin/Tuition/TuitionList";
 
-import ScorePage from "../pages/Scores/ScoreList";
-import AttendancePages from "../pages/Attendance/AttendanceList";
+import ScorePage from "../pages/Admin/Scores/ScoreList";
+import AttendancePages from "../pages/Admin/Attendance/AttendanceList";
+import ScheduleList from "../pages/Admin/Schedules/ScheduleList";
+
+import OrganizationPage from "../pages/Admin/Organization/OrganizationPage";
 
 // ================= TEACHER =================
 import TeacherLayout from "../layouts/TeacherLayout";
@@ -41,80 +44,427 @@ import StudentScore from "../pages/Student/StudentScore";
 import StudentSchedule from "../pages/Student/StudentSchedule";
 import StudentTuition from "../pages/Student/StudentTuition";
 
-// ================= AUTH GUARD =================
-import NotFound from "../components/NotFound"; // Đường dẫn tới file chứa trang 404 vừa tạo
+// ================= AUTH GUARD & ROLES =================
+import NotFound from "../components/NotFound";
 import PrivateRoute from "../components/PrivateRoute";
-import ScheduleList from "../pages/Schedules/ScheduleList";
+import { ROLES } from "../constants/roles";
+
+import StaffPage from "../pages/Admin/Staff/StaffPage";
+import ManagementPage from "../pages/Admin/Management/ManagementPage";
+import DepartmentPage from "../pages/Admin/Management/DepartmentPage";
+import UnionPage from "../pages/Admin/Management/UnionPage";
+import SchoolCouncilPage from "../pages/Admin/Management/SchoolCouncilPage";
+import ParentManagementPage from "../pages/Admin/Management/ParentManagementPage";
+import RewardPage from "../pages/Admin/Management/RewardPage";
+import DisciplinePage from "../pages/Admin/Management/DisciplinePage";
+import DocumentPage from "../pages/Admin/Management/DocumentPage";
+import MeetingPage from "../pages/Admin/Management/MeetingPage";
 
 function AppRoutes() {
   return (
     <Routes>
+      {/* ================= REDIRECT TRANG CHỦ ================= */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
       {/* ================= LOGIN ================= */}
       <Route path="/login" element={<Login />} />
 
-      {/* ================= ADMIN ROUTES ================= */}
+      {/* ================= ADMIN / SYSTEM PORTAL ROUTES ================= */}
       <Route
         path="/admin"
         element={
-          <PrivateRoute role="admin">
+          <PrivateRoute roles={Object.values(ROLES)}>
             <AdminLayout />
           </PrivateRoute>
         }
       >
+        {/* Dashboard chung cho tất cả roles */}
         <Route index element={<Dashboard />} />
-
-        <Route path="teachers" element={<TeacherList />} />
         <Route path="profile" element={<AdminProfile />} />
-        <Route path="teachers/add" element={<TeacherAdd />} />
-        <Route path="teachers/edit/:id" element={<TeacherEdit />} />
-        <Route path="teachers/profile/:id" element={<TeacherProfile />} />
 
-        <Route path="students" element={<StudentList />} />
-        <Route path="students/:id" element={<StudentProfile />} />
+        {/* Tổ chức nhà trường */}
+        <Route
+          path="organization"
+          element={
+            <PrivateRoute roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}>
+              <OrganizationPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="management"
+          element={
+            <PrivateRoute
+              roles={[ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL]}
+            >
+              <ManagementPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="departments"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+              ]}
+            >
+              <DepartmentPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="union"
+          element={
+            <PrivateRoute
+              roles={[ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.UNION_PRESIDENT]}
+            >
+              <UnionPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="schoolCouncil"
+          element={
+            <PrivateRoute
+              roles={[ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.SCHOOL_COUNCIL]}
+            >
+              <SchoolCouncilPage />
+            </PrivateRoute>
+          }
+        />
 
-        <Route path="classes" element={<ClassList />} />
-        <Route path="classes/:id" element={<ClassDetail />} />
+        {/* Quản lý Nhân sự */}
+        <Route
+          path="teachers"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.UNION_PRESIDENT,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <TeacherList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="teachers/add"
+          element={
+            <PrivateRoute roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}>
+              <TeacherAdd />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="teachers/edit/:id"
+          element={
+            <PrivateRoute roles={[ROLES.ADMIN, ROLES.PRINCIPAL]}>
+              <TeacherEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="teachers/profile/:id"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.UNION_PRESIDENT,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <TeacherProfile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="students"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+              ]}
+            >
+              <StudentList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="students/:id"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+              ]}
+            >
+              <StudentProfile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="parents"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.TEACHER,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <ParentManagementPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="staffs"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.OFFICE_STAFF,
+                ROLES.UNION_PRESIDENT,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <StaffPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Đào tạo */}
+        <Route
+          path="classes"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.STUDENT,
+              ]}
+            >
+              <ClassList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="classes/:id"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.STUDENT,
+              ]}
+            >
+              <ClassDetail />
+            </PrivateRoute>
+          }
+        />
 
         <Route path="subjects" element={<SubjectPage />} />
-        <Route path="tuition" element={<TuitionPage />} />
+
+        <Route
+          path="schedules"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.STUDENT,
+              ]}
+            >
+              <ScheduleList />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Nghiệp vụ */}
+        <Route
+          path="attendance"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.STUDENT,
+                ROLES.PARENT,
+              ]}
+            >
+              <AttendancePages />
+            </PrivateRoute>
+          }
+        />
 
         <Route path="scores" element={<ScorePage />} />
-        <Route path="attendance" element={<AttendancePages />} />
 
-        <Route path="schedules" element={<ScheduleList />} />
+        <Route
+          path="tuition"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.OFFICE_STAFF,
+                ROLES.PARENT,
+                ROLES.STUDENT,
+              ]}
+            >
+              <TuitionPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="rewards"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.UNION_PRESIDENT,
+                ROLES.TEACHER,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <RewardPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="discipline"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <DisciplinePage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Điều hành */}
+        <Route
+          path="documents"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.OFFICE_STAFF,
+                ROLES.UNION_PRESIDENT,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <DocumentPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="meetings"
+          element={
+            <PrivateRoute
+              roles={[
+                ROLES.ADMIN,
+                ROLES.PRINCIPAL,
+                ROLES.VICE_PRINCIPAL,
+                ROLES.DEPARTMENT_HEAD,
+                ROLES.TEACHER,
+                ROLES.UNION_PRESIDENT,
+                ROLES.OFFICE_STAFF,
+                ROLES.SCHOOL_COUNCIL,
+              ]}
+            >
+              <MeetingPage />
+            </PrivateRoute>
+          }
+        />
       </Route>
 
-      {/* ================= TEACHER ROUTES ================= */}
+      {/* ================= TEACHER DEDICATED PORTAL ================= */}
       <Route
         path="/teacher"
         element={
-          <PrivateRoute role="teacher">
+          <PrivateRoute roles={[ROLES.TEACHER, ROLES.DEPARTMENT_HEAD]}>
             <TeacherLayout />
           </PrivateRoute>
         }
       >
         <Route index element={<TeacherDashboard />} />
-        <Route path="/teacher/classes" element={<ClassDetail1 />} />
-        <Route path="/teacher/schedules" element={<SchedulesTeacher />} />
-        <Route path="/teacher/attendance" element={<AttendanceTeacher />} />
-        <Route path="/teacher/profile" element={<TeacherProfile1 />} />
-        {/* <Route path="scores" element={<TeacherScore />} /> */}
+        <Route path="classes" element={<ClassDetail1 />} />
+        <Route path="schedules" element={<SchedulesTeacher />} />
+        <Route path="attendance" element={<AttendanceTeacher />} />
+        <Route path="profile" element={<TeacherProfile1 />} />
       </Route>
+
+      {/* ================= STUDENT DEDICATED PORTAL ================= */}
       <Route
         path="/student"
         element={
-          <PrivateRoute role="student">
+          <PrivateRoute roles={[ROLES.STUDENT]}>
             <StudentLayout />
           </PrivateRoute>
         }
       >
         <Route index element={<StudentDashboard />} />
-        <Route path="/student/profile" element={<StudentProfileDetail />} />
-        <Route path="/student/scores" element={<StudentScore />} />
-        <Route path="/student/schedules" element={<StudentSchedule />} />
-        <Route path="/student/tuition" element={<StudentTuition />} />
+        <Route path="profile" element={<StudentProfileDetail />} />
+        <Route path="scores" element={<StudentScore />} />
+        <Route path="schedules" element={<StudentSchedule />} />
+        <Route path="tuition" element={<StudentTuition />} />
       </Route>
-      {/* ================= FALLBACK ================= */}
+
+      {/* ================= FALLBACK & ERROR ROUTES ================= */}
       <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
